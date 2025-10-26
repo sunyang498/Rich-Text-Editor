@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import MarkButton from './MarkButton.vue'
 import { useEditorContext } from '@/composables/EditorContext'
+import ColorPicker from './ColorPicker.vue'
+import FontSizePicker from './FontSizePicker.vue'
+import FontFamilyPicker from './FontFamilyPicker.vue'
 
 // 获取编辑器实例
 const editor = useEditorContext()
@@ -40,6 +43,10 @@ const editor = useEditorContext()
             label="代码"
         />
 
+        <ColorPicker type="text"></ColorPicker>
+        <ColorPicker type="background"></ColorPicker>
+        <FontSizePicker></FontSizePicker>
+        <FontFamilyPicker></FontFamilyPicker>
     </div>
 </template>
 
