@@ -4,6 +4,9 @@ import { useEditorContext } from '@/composables/EditorContext'
 import ColorPicker from './ColorPicker.vue'
 import FontSizePicker from './FontSizePicker.vue'
 import FontFamilyPicker from './FontFamilyPicker.vue'
+import HeadingSelect from './HeadingSelect.vue'
+import TextAlignSelect from './TextAlignSelect.vue'
+import LineHeightSelect from './LineHeightSelect.vue'
 
 // 获取编辑器实例
 const editor = useEditorContext()
@@ -47,6 +50,9 @@ const editor = useEditorContext()
         <ColorPicker type="background"></ColorPicker>
         <FontSizePicker></FontSizePicker>
         <FontFamilyPicker></FontFamilyPicker>
+        <HeadingSelect></HeadingSelect>
+        <TextAlignSelect></TextAlignSelect>
+        <LineHeightSelect></LineHeightSelect>
     </div>
 </template>
 

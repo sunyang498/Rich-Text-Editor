@@ -7,6 +7,8 @@ import ToolBar from './ToolBar.vue'
 import { provideEditor } from '@/composables/EditorContext'
 import { FontSize } from '@/composables/FontSize';
 import { FontFamily } from '@/composables/FontFamily';
+import { LineHeight } from '@/composables/LineHeight';
+import TextAlign from '@tiptap/extension-text-align'
 
 const editor = useEditor({
     content: '<p>开始编辑你的内容...</p >',
@@ -16,9 +18,15 @@ const editor = useEditor({
         BackgroundColor,
         FontSize,
         FontFamily,
+        LineHeight,
         Color.configure({
           types: ['textStyle'] // 允许 textStyle 扩展使用颜色属性
         }),
+        TextAlign.configure({
+            types:['heading','paragraph'],
+            alignments:['left','center','right','justify'],
+            defaultAlignment:'left'
+        })
     ],
 })
 provideEditor(editor)
