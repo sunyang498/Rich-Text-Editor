@@ -7,6 +7,7 @@ import FontFamilyPicker from './FontFamilyPicker.vue'
 import HeadingSelect from './HeadingSelect.vue'
 import TextAlignSelect from './TextAlignSelect.vue'
 import LineHeightSelect from './LineHeightSelect.vue'
+import TextIndentSelect from './TextIndentSelect.vue'
 
 // 获取编辑器实例
 const editor = useEditorContext()
@@ -53,6 +54,7 @@ const editor = useEditorContext()
         <HeadingSelect></HeadingSelect>
         <TextAlignSelect></TextAlignSelect>
         <LineHeightSelect></LineHeightSelect>
+        <TextIndentSelect></TextIndentSelect>
     </div>
 </template>
 

@@ -9,6 +9,7 @@ import { FontSize } from '@/composables/FontSize';
 import { FontFamily } from '@/composables/FontFamily';
 import { LineHeight } from '@/composables/LineHeight';
 import TextAlign from '@tiptap/extension-text-align'
+import { TextIndent } from '@/composables/TextIndent';
 
 const editor = useEditor({
     content: '<p>开始编辑你的内容...</p >',
@@ -19,6 +20,7 @@ const editor = useEditor({
         FontSize,
         FontFamily,
         LineHeight,
+        TextIndent,
         Color.configure({
           types: ['textStyle'] // 允许 textStyle 扩展使用颜色属性
         }),
