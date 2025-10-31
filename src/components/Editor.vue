@@ -10,6 +10,7 @@ import { FontFamily } from '@/composables/FontFamily';
 import { LineHeight } from '@/composables/LineHeight';
 import TextAlign from '@tiptap/extension-text-align'
 import { TextIndent } from '@/composables/TextIndent';
+import Image from '@tiptap/extension-image'
 
 const editor = useEditor({
     content: '<p>开始编辑你的内容...</p >',
@@ -28,6 +29,14 @@ const editor = useEditor({
             types:['heading','paragraph'],
             alignments:['left','center','right','justify'],
             defaultAlignment:'left'
+        }),
+        Image.configure({
+            HTMLAttributes:{
+                class:'editor-image',
+                loading:'lazy'
+            },
+            inline:false,
+            allowBase64:true
         })
     ],
 })

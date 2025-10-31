@@ -8,6 +8,9 @@ import HeadingSelect from './HeadingSelect.vue'
 import TextAlignSelect from './TextAlignSelect.vue'
 import LineHeightSelect from './LineHeightSelect.vue'
 import TextIndentSelect from './TextIndentSelect.vue'
+import ListControl from './ListControl.vue'
+import BlockElement from './BlockElement.vue'
+import ImageControl from './ImageControl.vue'
 
 // 获取编辑器实例
 const editor = useEditorContext()
@@ -55,6 +58,9 @@ const editor = useEditorContext()
         <TextAlignSelect></TextAlignSelect>
         <LineHeightSelect></LineHeightSelect>
         <TextIndentSelect></TextIndentSelect>
+        <ListControl></ListControl>
+        <BlockElement></BlockElement>
+        <ImageControl></ImageControl>
     </div>
 </template>
 
