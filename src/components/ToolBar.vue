@@ -11,6 +11,7 @@ import TextIndentSelect from './TextIndentSelect.vue'
 import ListControl from './ListControl.vue'
 import BlockElement from './BlockElement.vue'
 import ImageControl from './ImageControl.vue'
+import LinkControl from './LinkControl.vue'
 
 // 获取编辑器实例
 const editor = useEditorContext()
@@ -61,6 +62,7 @@ const editor = useEditorContext()
         <ListControl></ListControl>
         <BlockElement></BlockElement>
         <ImageControl></ImageControl>
+        <LinkControl></LinkControl>
     </div>
 </template>
 

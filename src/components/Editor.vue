@@ -11,6 +11,7 @@ import { LineHeight } from '@/composables/LineHeight';
 import TextAlign from '@tiptap/extension-text-align'
 import { TextIndent } from '@/composables/TextIndent';
 import Image from '@tiptap/extension-image'
+import Link from '@tiptap/extension-link'
 
 const editor = useEditor({
     content: '<p>开始编辑你的内容...</p >',
@@ -37,6 +38,13 @@ const editor = useEditor({
             },
             inline:false,
             allowBase64:true
+        }),
+        Link.configure({
+            openOnClick:false,
+            HTMLAttributes:{
+                class:'editor-link',
+                rel:'noopener noreferrer nofollow'
+            }
         })
     ],
 })
