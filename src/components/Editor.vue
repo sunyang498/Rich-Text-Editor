@@ -40,7 +40,7 @@ const editor = useEditor({
             allowBase64:true
         }),
         Link.configure({
-            openOnClick:false,
+            openOnClick:true,
             HTMLAttributes:{
                 class:'editor-link',
                 rel:'noopener noreferrer nofollow'

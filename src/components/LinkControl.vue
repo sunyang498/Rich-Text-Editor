@@ -55,19 +55,31 @@ const initDialog=()=>{
     }
 }
 const applyLink=()=>{
-    if(isLinkActive.value){
-
-    }else if(selectText.value){
-
-    }else{
-        
+    const linkAtt={
+        href:linkUrl.value,
+        target:'_blank',
+        rel:'noopener noreferrer nofollow'
     }
+    if(openInNewTab.value){
+        linkAtt.rel='noopener noreferrer nofollow'
+        linkAtt.target='_blank'
+    }
+    if(isLinkActive.value){
+        editor.value?.chain().focus().extendMarkRange('link').updateAttributes('link',linkAtt).run()
+    
+    }else if(selectText.value){
+        editor.value?.chain().focus().setLink(linkAtt).run()
+    }else{
+        editor.value?.chain().focus().setLink(linkAtt).insertContent(linkUrl.value).run()
+    }
+    showLinkDialog.value=false
 }
 const removeLink=()=>{
+    editor.value?.chain().focus().extendMarkRange('link').unsetLink().run()
     showLinkDialog.value=false
 }
 const cancelLink=()=>{
-
+    showLinkDialog.value=false
 }
 const selectedText=computed(()=>{
     return false
