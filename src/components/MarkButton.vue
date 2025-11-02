@@ -34,7 +34,7 @@ const computedIsActive = computed(() => props.isActive || false)
         @click="handleClick"
         :class="{ 'is-active': computedIsActive }"
         :disabled="disabled"
-        class="toolbar-button"
+        class="toolbar-mark-button"
     >
         <!-- 插槽：可以自定义按钮内容 -->
         <slot>{{ label }}</slot>
