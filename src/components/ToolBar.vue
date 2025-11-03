@@ -13,6 +13,7 @@ import BlockElement from './BlockElement.vue'
 import ImageControl from './ImageControl.vue'
 import LinkControl from './LinkControl.vue'
 import EditControl from './EditControl.vue'
+import AI from '@/components/AI.vue'
 
 // 获取编辑器实例
 const editor = useEditorContext()
@@ -65,6 +66,7 @@ const editor = useEditorContext()
         <ImageControl></ImageControl>
         <LinkControl></LinkControl>
         <EditControl></EditControl>
+        <AI></AI>
     </div>
 </template>
 
