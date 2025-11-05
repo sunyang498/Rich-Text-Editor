@@ -45,7 +45,7 @@ const editor = useEditor({
                 class:'editor-link',
                 rel:'noopener noreferrer nofollow'
             }
-        })
+        }),
     ],
 })
 provideEditor(editor)

@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import { GrammarCheckService } from '@/composables/grammarCheck';
 import type { GrammarIssue } from '@/composables/grammarCheck';
-import { computed,ref } from 'vue';
+import { computed,onMounted,ref } from 'vue';
 import { useEditorContext } from '@/composables/EditorContext';
+import { useAutoCheck } from '@/composables/AutoGrammarCheck';
 
 const editor=useEditorContext()
 const originSeleT=ref({from:0,to:0})
 const isGrammarCheckActive=ref(false)
 const issues=ref<GrammarIssue[]>([])
+const {isAutoChecking,
+        autoCheckEnable,
+        setupAutoCheck,
+        toggleAutoCheck,
+        performAutoCheck,
+        checkNow
+}=useAutoCheck(editor,issues)
 
 const selectedText=computed(()=>{
     if(!editor.value)
@@ -29,6 +37,12 @@ const fixAllIssues=()=>{
 const applyFix=(issue:GrammarIssue)=>{
 
 }
+
+onMounted(()=>{
+    setTimeout(()=>{
+        setupAutoCheck()
+    },3500)
+})
 
 </script>
 
@@ -73,6 +87,7 @@ const applyFix=(issue:GrammarIssue)=>{
             </div>
         </div>
     </div>
+    <GrammarMark></GrammarMark>
 </template>
 
 <style>
