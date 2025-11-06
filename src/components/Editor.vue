@@ -12,6 +12,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import { TextIndent } from '@/composables/TextIndent';
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
+import OnlineCollaboration from './OnlineCollaboration.vue';
 
 const editor = useEditor({
     content: '<p>开始编辑你的内容...</p >',
@@ -55,6 +56,7 @@ provideEditor(editor)
     <div class="editor-container">
         <ToolBar></ToolBar>
         <editor-content :editor="editor" class="editor-content" />
+        <OnlineCollaboration></OnlineCollaboration>
     </div>
 </template>
 
