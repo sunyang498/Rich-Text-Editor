@@ -15,6 +15,7 @@
     "lint": "eslint . --fix --cache"
   },
   "dependencies": {
+    "@tiptap/extension-collaboration": "^3.10.2",
     "@tiptap/extension-color": "^3.8.0",
     "@tiptap/extension-heading": "^3.8.0",
     "@tiptap/extension-history": "^3.8.0",
@@ -31,7 +32,8 @@
     "pinia": "^3.0.3",
     "vue": "^3.5.22",
     "vue-router": "^4.6.3",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "yjs": "^13.6.27"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.2",

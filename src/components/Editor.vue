@@ -13,6 +13,12 @@ import { TextIndent } from '@/composables/TextIndent';
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import OnlineCollaboration from './OnlineCollaboration.vue';
+import * as Y from 'yjs'
+import Collaboration from '@tiptap/extension-collaboration'
+import { provide } from 'vue';
+
+const ydoc=new Y.Doc()
+provide('ydoc',ydoc)
 
 const editor = useEditor({
     content: '<p>开始编辑你的内容...</p >',
@@ -47,6 +53,9 @@ const editor = useEditor({
                 rel:'noopener noreferrer nofollow'
             }
         }),
+        Collaboration.configure({
+            document:ydoc
+        })
     ],
 })
 provideEditor(editor)
