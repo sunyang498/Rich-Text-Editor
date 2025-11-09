@@ -54,7 +54,7 @@ const editor = useEditorContext()
             label="代码"
         />
 
-        <!-- <ColorPicker type="text"></ColorPicker>
+        <ColorPicker type="text"></ColorPicker>
         <ColorPicker type="background"></ColorPicker>
         <FontSizePicker></FontSizePicker>
         <FontFamilyPicker></FontFamilyPicker>
@@ -66,7 +66,7 @@ const editor = useEditorContext()
         <BlockElement></BlockElement>
         <ImageControl></ImageControl>
         <LinkControl></LinkControl>
-        <EditControl></EditControl> -->
+        <EditControl></EditControl>
         <AI></AI>
         <GrammarCheck></GrammarCheck>
     </div>

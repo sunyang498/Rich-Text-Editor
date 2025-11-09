@@ -15,7 +15,7 @@ let ws = null
 // 计算状态样式
 const statusClass = ref('status-disconnected')
 
-// 初始化 Yjs 文档
+// 初始化 Yjs 文档 
 const initYjs = () => {
   doc = inject('ydoc')
   text = doc.getText('content')
@@ -138,7 +138,7 @@ onUnmounted(() => {
 
 <template>
   <div class="editor-container">
-    <h1>Vue3 + Yjs 实时协作编辑</h1>
+    <h1>实时协作编辑</h1>
     
     <div class="status">
       状态: <span :class="statusClass">{{ status }}</span>
