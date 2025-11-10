@@ -1,258 +1,141 @@
-<script setup>
-import { ref, onMounted, onUnmounted, nextTick,inject } from 'vue'
-import * as Y from 'yjs'
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import useCollaborativeDoc from '@/composables/CollaborativeDoc'
 
-// 响应式数据
-const status = ref('未连接')
-const isConnected = ref(false)
-const editorElement = ref(null)
+// 中文注释：
+// 该组件用于快速在页面中测试协同编辑的连接与 awareness。默认假设 Editor.vue
+// 已经提供了 ydoc（provide('ydoc', ydoc)）并使用了 Collaboration extension。
 
-// Yjs 相关变量
-let doc = null
-let text = null
-let ws = null
+// 创建 composable：由于 Editor.vue 已经使用 Collaboration extension，传入 registerPlugins:false
+const collab = useCollaborativeDoc({ url: 'ws://localhost:1234', room: 'demo-room', registerPlugins: false })
 
-// 计算状态样式
-const statusClass = ref('status-disconnected')
+const connected = collab.connected
 
-// 初始化 Yjs 文档 
-const initYjs = () => {
-  doc = inject('ydoc')
-  text = doc.getText('content')
-  
-  // 监听文本变化并更新编辑器
-  text.observe(() => {
-    if (editorElement.value) {
-      const currentText = editorElement.value.innerText
-      const newText = text.toString()
-      
-      // 避免重复更新导致的光标跳动
-      if (currentText !== newText) {
-        // 保存当前光标位置
-        const selection = window.getSelection()
-        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null
-        
-        // 更新内容
-        editorElement.value.innerText = newText
-        
-        // 恢复光标位置
-        if (range) {
-          selection.removeAllRanges()
-          selection.addRange(range)
-        }
-      }
-    }
-  })
-  
-  // 监听文档更新并发送到服务器
-  doc.on('update', (update) => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      // 直接发送 ArrayBuffer，不转换为 JSON 字符串
-      ws.send(update)
-    }
-  })
-}
+// 从 provider.awareness 中读取当前的在线用户状态（返回 Map-like 结构）
+const users = ref<Record<string, any>>({})
 
-// 处理接收到的 WebSocket 消息
-const handleWebSocketMessage = async (event) => {
+function refreshUsers() {
   try {
-    let data = event.data
-    
-    // 如果数据是 Blob，转换为 ArrayBuffer
-    if (data instanceof Blob) {
-      data = await new Response(data).arrayBuffer()
+    const states = collab.provider.awareness.getStates()
+    const entries: Record<string, any> = {}
+    // awareness.getStates() 返回 Map 的迭代器
+    for (const [key, val] of states) {
+      entries[String(key)] = val
     }
-    
-    // 应用从其他客户端收到的更新
-    const update = new Uint8Array(data)
-    Y.applyUpdate(doc, update)
-  } catch (error) {
-    console.error('处理 WebSocket 消息时出错:', error)
+    users.value = entries
+  } catch (e) {
+    users.value = {}
   }
 }
 
-// 连接 WebSocket
-const connect = () => {
-  if (isConnected.value) return
-  
-  ws = new WebSocket('ws://localhost:8081')
-  
-  // 设置二进制数据类型为 arraybuffer
-  ws.binaryType = 'arraybuffer'
-  
-  ws.onopen = () => {
-    status.value = '已连接'
-    isConnected.value = true
-    statusClass.value = 'status-connected'
-    console.log('连接到服务器')
-  }
-  
-  ws.onmessage = handleWebSocketMessage
-  
-  ws.onclose = () => {
-    status.value = '未连接'
-    isConnected.value = false
-    statusClass.value = 'status-disconnected'
-  }
-  
-  ws.onerror = (error) => {
-    console.error('WebSocket 错误:', error)
-    status.value = '连接错误'
-    statusClass.value = 'status-error'
+function toggleConnection() {
+  if (connected.value) {
+    // 断开：优先尝试 disconnect（若存在），否则作为回退使用 destroy
+    try {
+      // @ts-ignore
+      collab.provider.disconnect()
+    } catch (e) {
+      try { collab.destroy() } catch {}
+    }
+  } else {
+    try { collab.provider.connect() } catch (e) {}
   }
 }
 
-// 断开连接
-const disconnect = () => {
-  if (ws) {
-    ws.close()
-    ws = null
-  }
-  status.value = '未连接'
-  isConnected.value = false
-  statusClass.value = 'status-disconnected'
+function destroyAll() {
+  collab.destroy()
 }
 
-// 处理编辑器输入
-const handleEditorInput = (event) => {
-  const newText = event.target.innerText
-  const currentText = text.toString()
-  
-  if (newText !== currentText) {
-    // 删除旧内容，插入新内容
-    text.delete(0, text.length)
-    text.insert(0, newText)
-  }
-}
-
-// 组件挂载时初始化 Yjs
 onMounted(() => {
-  initYjs()
+  // 监听 awareness 更新并刷新用户列表
+  try { collab.provider.awareness.on('change', refreshUsers) } catch (e) {}
+  refreshUsers()
 })
 
-// 组件卸载时清理资源
-onUnmounted(() => {
-  disconnect()
+onBeforeUnmount(() => {
+  try { collab.provider.awareness.off('change', refreshUsers) } catch (e) {}
 })
 </script>
 
 <template>
-  <div class="editor-container">
-    <h1>实时协作编辑</h1>
-    
+  <div class="online-collab">
+    <h3>在线协作测试面板</h3>
+    <p class="note">此组件用于在页面内快速测试协作连接与 awareness（在线用户）。包含中文说明与调试步骤。</p>
+
     <div class="status">
-      状态: <span :class="statusClass">{{ status }}</span>
+      <strong>连接状态：</strong>
+      <span :class="{ connected: connected, disconnected: !connected }">{{ connected ? '已连接' : '未连接' }}</span>
     </div>
-    
+
     <div class="controls">
-      <button 
-        @click="connect" 
-        :disabled="isConnected"
-        class="btn btn-connect"
-      >
-        连接
-      </button>
-      <button 
-        @click="disconnect" 
-        :disabled="!isConnected"
-        class="btn btn-disconnect"
-      >
-        断开
-      </button>
+      <button @click="toggleConnection">{{ connected ? '断开连接' : '连接' }}</button>
+      <button @click="destroyAll">销毁（关闭 provider & ydoc）</button>
     </div>
-    
-    <div 
-      ref="editorElement"
-      contenteditable="true" 
-      class="editor"
-      @input="handleEditorInput"
-    ></div>
+
+    <div class="users">
+      <strong>在线用户：</strong>
+      <ul>
+        <li v-for="(u, id) in users" :key="id">
+          <span class="dot" :style="{ background: u.user?.color ?? '#999' }"></span>
+          {{ u.user?.name ?? '匿名' }} <small>({{ id }})</small>
+        </li>
+      </ul>
+      <div v-if="!Object.keys(users).length">当前没有其他在线用户（或尚未同步 awareness 状态）</div>
+    </div>
+
+    <details class="debug">
+      <summary>调试与使用说明（中文）</summary>
+      <ol>
+        <li>确保本项目已经安装依赖（yjs, y-websocket 等），package.json 中已有依赖。</li>
+        <li>在本地或局域网内启动 y-websocket 服务（PowerShell 示例）：
+          <pre><code>npx y-websocket --port 1234</code></pre>
+        </li>
+        <li>在浏览器中打开两个窗口访问本项目（同一局域网内的不同设备或本机的两个窗口都可以），进入编辑页面并使用编辑器同步内容。</li>
+        <li>如果 `Editor.vue` 已经使用了 `Collaboration` extension（本仓库默认如此），创建 composable 时请传入 <code>registerPlugins: false</code>，避免重复注册插件。</li>
+        <li>公网部署：若需要跨互联网协作，请在公网服务器上部署 y-websocket 并使用 TLS（wss://）。示例（仅供参考）：
+          <pre><code>// collab = useCollaborativeDoc({ url: 'wss://collab.example.com', room: 'project-123', registerPlugins: false })</code></pre>
+        </li>
+      </ol>
+      <p>注意：销毁（destroy）会关闭 provider 并尝试销毁 ydoc；若 ydoc 是由 Editor.vue 提供（provide('ydoc', ydoc)），销毁可能影响 Editor 中的文档，慎用。</p>
+    </details>
   </div>
 </template>
 
 <style scoped>
-.editor-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
-
-h1 {
-  color: #333;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.status {
-  margin-bottom: 15px;
-  font-size: 16px;
-}
-
-.status-connected {
-  color: #28a745;
-  font-weight: bold;
-}
-
-.status-disconnected {
-  color: #6c757d;
-  font-weight: bold;
-}
-
-.status-error {
-  color: #dc3545;
-  font-weight: bold;
-}
-
-.controls {
-  margin-bottom: 20px;
-}
-
-.btn {
-  padding: 8px 16px;
-  margin-right: 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-connect {
-  background-color: #28a745;
-  color: white;
-}
-
-.btn-connect:hover:not(:disabled) {
-  background-color: #218838;
-}
-
-.btn-disconnect {
-  background-color: #dc3545;
-  color: white;
-}
-
-.btn-disconnect:hover:not(:disabled) {
-  background-color: #c82333;
-}
-
-.editor {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 15px;
-  min-height: 200px;
-  font-size: 16px;
-  line-height: 1.5;
-  outline: none;
-}
-
-.editor:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
+  .online-collab {
+    border: 1px dashed #ddd;
+    padding: 12px;
+    border-radius: 6px;
+    background: #fafafa;
+  }
+  .note { 
+    color: #666; 
+  }
+  .status span.connected { 
+    color: #19a34a 
+  }
+  .status span.disconnected { 
+    color: #b22222 
+  }
+  .controls { 
+    margin: 8px 0 
+  }
+  .controls button { 
+    margin-right: 8px 
+  }
+  .users { 
+    margin-top: 8px 
+  }
+  .users .dot { 
+    display:inline-block; 
+    width:10px; 
+    height:10px; 
+    border-radius:50%; 
+    margin-right:6px; 
+    vertical-align:middle 
+  }
+  .debug { 
+    margin-top: 12px 
+  }
 </style>
+
