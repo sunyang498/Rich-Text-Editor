@@ -23,61 +23,69 @@ const editor = useEditorContext()
 
 <template>
     <div class="toolbar">
-        <!-- 使用按钮组件 -->
-        <MarkButton 
-            :command="() => editor?.chain().focus().toggleBold().run()"
-            :is-active="editor?.isActive('bold')"
-            label="粗体"
-        />
-        
-        <MarkButton 
-            :command="() => editor?.chain().focus().toggleItalic().run()"
-            :is-active="editor?.isActive('italic')"
-            label="斜体"
-        />
-        
-        <MarkButton 
-            :command="() => editor?.chain().focus().toggleUnderline().run()"
-            :is-active="editor?.isActive('underline')"
-            label="下划线"
-        />
+        <div class="toolbar-left">
+            <!-- 主要格式化按钮（可水平滚动） -->
+            <div class="group">
+                <MarkButton :command="() => editor?.chain().focus().toggleBold().run()" :is-active="editor?.isActive('bold')" label="粗体" />
+                <MarkButton :command="() => editor?.chain().focus().toggleItalic().run()" :is-active="editor?.isActive('italic')" label="斜体" />
+                <MarkButton :command="() => editor?.chain().focus().toggleUnderline().run()" :is-active="editor?.isActive('underline')" label="下划线" />
+                <MarkButton :command="() => editor?.chain().focus().toggleStrike().run()" :is-active="editor?.isActive('strike')" label="删除线" />
+                <MarkButton :command="() => editor?.chain().focus().toggleCode().run()" :is-active="editor?.isActive('code')" label="代码" />
+            </div>
 
-        <MarkButton 
-            :command="() => editor?.chain().focus().toggleStrike().run()"
-            :is-active="editor?.isActive('strike')"
-            label="删除线"
-        />
+            <div class="group">
+                <ColorPicker type="text" />
+                <ColorPicker type="background" />
+                <FontSizePicker />
+                <FontFamilyPicker />
+                <HeadingSelect />
+                <TextAlignSelect />
+                <LineHeightSelect />
+                <TextIndentSelect />
+                <ListControl />
+                <BlockElement />
+                <ImageControl />
+                <LinkControl />
+            </div>
+        </div>
 
-        <MarkButton 
-            :command="() => editor?.chain().focus().toggleCode().run()"
-            :is-active="editor?.isActive('code')"
-            label="代码"
-        />
-
-        <ColorPicker type="text"></ColorPicker>
-        <ColorPicker type="background"></ColorPicker>
-        <FontSizePicker></FontSizePicker>
-        <FontFamilyPicker></FontFamilyPicker>
-        <HeadingSelect></HeadingSelect>
-        <TextAlignSelect></TextAlignSelect>
-        <LineHeightSelect></LineHeightSelect>
-        <TextIndentSelect></TextIndentSelect>
-        <ListControl></ListControl>
-        <BlockElement></BlockElement>
-        <ImageControl></ImageControl>
-        <LinkControl></LinkControl>
-        <EditControl></EditControl>
-        <AI></AI>
-        <GrammarCheck></GrammarCheck>
+        <div class="toolbar-right">
+            <EditControl />
+            <AI />
+            <GrammarCheck />
+        </div>
     </div>
 </template>
 
 <style scoped>
 .toolbar {
-    padding: 8px;
-    border-bottom: 1px solid #e0e0e0;
-    background: #f9f9f9;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(16,24,40,0.04);
+    background: linear-gradient(180deg, #ffffff, #fbfbfb);
     display: flex;
     gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1 1 auto; /* 允许在父容器中伸缩 */
+    min-width: 0; /* 避免在 flex 布局中溢出，触发子元素滚动 */
 }
+
+.toolbar-left { display:flex; gap:8px; align-items:center; overflow-x:auto; flex:1; -webkit-overflow-scrolling: touch }
+.toolbar-left .group { display:flex; gap:6px; align-items:center; white-space: nowrap }
+.toolbar-left .group > * { display: inline-flex }
+.toolbar-right { display:flex; gap:8px; align-items:center }
+
+/* 给工具栏内元素更一致的小尺寸样式 */
+.toolbar ::v-deep .toolbar-mark-button,
+.toolbar ::v-deep .image-button,
+.toolbar ::v-deep button {
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+/* 手机端：工具栏可换行，按钮自适应 */
+/* @media (max-width: 600px) {
+    .toolbar { flex-wrap: wrap; gap: 6px; padding: 8px; }
+    .toolbar ::v-deep .toolbar-mark-button { padding: 8px 10px; font-size: 14px }
+} */
 </style>

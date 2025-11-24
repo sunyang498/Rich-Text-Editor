@@ -103,39 +103,33 @@ onBeforeUnmount(() => {
 
 <style scoped>
   .online-collab {
-    border: 1px dashed #ddd;
+    border-radius: 8px;
+    background: rgba(250,250,251,0.9);
     padding: 12px;
-    border-radius: 6px;
-    background: #fafafa;
+    border: 1px solid rgba(16,24,40,0.04);
+    box-shadow: 0 4px 12px rgba(2,6,23,0.04);
+    max-width: 420px;
   }
-  .note { 
-    color: #666; 
-  }
-  .status span.connected { 
-    color: #19a34a 
-  }
-  .status span.disconnected { 
-    color: #b22222 
-  }
-  .controls { 
-    margin: 8px 0 
-  }
-  .controls button { 
-    margin-right: 8px 
-  }
-  .users { 
-    margin-top: 8px 
-  }
-  .users .dot { 
-    display:inline-block; 
-    width:10px; 
-    height:10px; 
-    border-radius:50%; 
-    margin-right:6px; 
-    vertical-align:middle 
-  }
-  .debug { 
-    margin-top: 12px 
-  }
+  .note { color: #6b7280; font-size: 13px }
+  .status { margin-top: 6px; margin-bottom: 8px }
+  .status span.connected { color: #10b981; font-weight: 600 }
+  .status span.disconnected { color: #ef4444; font-weight: 600 }
+  .controls { margin: 10px 0; display:flex; gap:8px; flex-wrap:wrap }
+  .controls button { padding: 8px 10px; border-radius:6px; border:none; cursor:pointer }
+  .controls button:first-child { background: linear-gradient(90deg,#0ea5e9,#0b74ff); color:white }
+  .controls button:last-child { background: #fff; border:1px solid rgba(16,24,40,0.06) }
+  .users { margin-top: 8px; max-height: 140px; overflow:auto }
+  .users ul { padding-left: 12px; margin: 6px 0 }
+  .users li { display:flex; align-items:center; gap:8px; padding: 6px 4px; border-radius:6px }
+  .users li + li { border-top: 1px dashed rgba(16,24,40,0.03) }
+  .users .dot { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle }
+  .debug { margin-top: 12px; font-size:13px }
+
+  /* 移动端：让面板更流式 */
+  /* @media (max-width: 600px) {
+    .online-collab { width: calc(100% - 28px); max-width: none }
+    .controls { gap:6px }
+    .controls button { flex: 1 1 auto }
+  } */
 </style>
 

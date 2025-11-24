@@ -58,12 +58,12 @@ export function useCollaborativeDoc(options?: { url?: string; room?: string; use
     // 该选项在 Editor 已经使用 @tiptap/extension-collaboration（仅需要 provider/awareness）时非常有用
     const registerPlugins = options?.registerPlugins ?? true
 
-        // Editor context (a Ref<Editor|undefined>) provided by EditorContext
-        const editorRef = useEditorContext() as Ref<Editor | undefined>
+    // Editor context (a Ref<Editor|undefined>) provided by EditorContext
+    const editorRef = useEditorContext() as Ref<Editor | undefined>
 
-        // prefer a provided ydoc (Editor.vue does `provide('ydoc', ydoc)`), otherwise create our own
-        const provided = inject('ydoc') as Y.Doc | undefined
-        const ydoc = provided ?? new Y.Doc()
+    // prefer a provided ydoc (Editor.vue does `provide('ydoc', ydoc)`), otherwise create our own
+    const provided = inject('ydoc') as Y.Doc | undefined
+    const ydoc = provided ?? new Y.Doc()
     const provider = new WebsocketProvider(url, room, ydoc)
     const yXmlFragment = ydoc.getXmlFragment('prosemirror')
 

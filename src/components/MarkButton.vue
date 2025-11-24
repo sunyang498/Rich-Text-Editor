@@ -43,25 +43,28 @@ const computedIsActive = computed(() => props.isActive || false)
 
 <style scoped>
 .toolbar-mark-button {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
+    padding: 6px 10px;
+    border: 1px solid rgba(16,24,40,0.06);
     background: white;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
+    transition: all 0.12s ease;
+    box-shadow: 0 1px 0 rgba(16,24,40,0.02);
 }
 
 .toolbar-mark-button:hover {
-    background: #f5f5f5;
+    transform: translateY(-1px);
+    background: #f7fbff;
 }
 
 .toolbar-mark-button.is-active {
-    background: #007bff;
+    background: #0b74ff;
     color: white;
-    border-color: #007bff;
+    border-color: #0b74ff;
 }
 
 .toolbar-mark-button:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
 }
 </style>
