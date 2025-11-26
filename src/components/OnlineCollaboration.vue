@@ -125,11 +125,22 @@ onBeforeUnmount(() => {
   .users .dot { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle }
   .debug { margin-top: 12px; font-size:13px }
 
-  /* 移动端：让面板更流式 */
-  /* @media (max-width: 600px) {
-    .online-collab { width: calc(100% - 28px); max-width: none }
+  /* 移动端：底部抽屉样式（占据屏幕底部一小部分，不遮挡顶端工具栏） */
+  @media (max-width: 600px) {
+    .online-collab {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      width: auto;
+      max-width: calc(100% - 24px);
+      max-height: 45vh;
+      overflow: auto;
+      border-radius: 12px 12px 6px 6px;
+      z-index: 11; /* 放在 toolbar 之下（toolbar 的 z-index 为 12） */
+    }
     .controls { gap:6px }
     .controls button { flex: 1 1 auto }
-  } */
+  }
 </style>
 

@@ -71,9 +71,26 @@ const editor = useEditorContext()
 }
 
 .toolbar-left { display:flex; gap:8px; align-items:center; overflow-x:auto; flex:1; -webkit-overflow-scrolling: touch }
-.toolbar-left .group { display:flex; gap:6px; align-items:center; white-space: nowrap }
+.toolbar-left::-webkit-scrollbar{ height:8px }
+.toolbar-left::-webkit-scrollbar-thumb{ background: rgba(16,24,40,0.08); border-radius:4px }
+.toolbar-left .group { display:flex; gap:8px; align-items:center; white-space: nowrap }
 .toolbar-left .group > * { display: inline-flex }
 .toolbar-right { display:flex; gap:8px; align-items:center }
+
+/* 手机端：工具栏固定于顶部，扩大交互目标并改善触摸滚动体验 */
+@media (max-width: 600px) {
+    .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 12;
+        padding: 8px 10px;
+        background: linear-gradient(180deg,#ffffff,#fbfbff);
+    }
+    .toolbar-left { gap:10px }
+    .toolbar-left .group { gap:10px }
+    .toolbar ::v-deep .toolbar-mark-button,
+    .toolbar ::v-deep button { padding: 10px 14px; font-size: 15px }
+}
 
 /* 给工具栏内元素更一致的小尺寸样式 */
 .toolbar ::v-deep .toolbar-mark-button,
@@ -84,8 +101,8 @@ const editor = useEditorContext()
 }
 
 /* 手机端：工具栏可换行，按钮自适应 */
-/* @media (max-width: 600px) {
+@media (max-width: 600px) {
     .toolbar { flex-wrap: wrap; gap: 6px; padding: 8px; }
     .toolbar ::v-deep .toolbar-mark-button { padding: 8px 10px; font-size: 14px }
-} */
+}
 </style>

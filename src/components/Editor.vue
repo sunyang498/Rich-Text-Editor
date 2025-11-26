@@ -141,11 +141,7 @@ const toggleSidebar = () => { sidebarOpen.value = !sidebarOpen.value }
     font-size: 13px;
 }
 
-.editor-body {
-    display:flex;
-    gap:16px;
-    padding: 18px;
-}
+
 
 .editor-main { flex:1; min-width:0 }
 
@@ -155,16 +151,27 @@ const toggleSidebar = () => { sidebarOpen.value = !sidebarOpen.value }
 }
 .editor-sidebar.closed{ width: 0; opacity: 0; overflow: hidden; padding: 0 }
 
-/* 移动端：侧栏以覆盖层形式显示 */
-/* @media (max-width: 800px){
+/* 移动端：侧栏作为底部抽屉显示，且不遮挡顶部 toolbar */
+@media (max-width: 800px){
     .editor-body{ flex-direction:column; padding: 12px }
-    .editor-sidebar{ position: fixed; right: 12px; top: 90px; width: 92%; max-width: 360px; z-index: 80; box-shadow: 0 10px 30px rgba(2,6,23,0.2) }
-    .editor-sidebar.closed{ transform: translateY(-12px); opacity: 0; pointer-events: none }
-} */
+    .editor-sidebar{
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        top: auto;
+        width: auto;
+        max-width: calc(100% - 24px);
+        z-index: 10;
+        box-shadow: 0 14px 40px rgba(2,6,23,0.18);
+        transition: transform 220ms ease, opacity 220ms ease;
+    }
+    .editor-sidebar.closed{ transform: translateY(120%); opacity: 0; pointer-events: none }
+}
 
 /* 移动端适配 */
-/* @media (max-width: 600px) {
+@media (max-width: 600px) {
   .editor-container { margin: 12px; border-radius: 8px; }
   .editor-content { padding: 14px; font-size: 15px; min-height: 260px }
-} */
+}
 </style>
