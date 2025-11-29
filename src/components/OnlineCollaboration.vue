@@ -2,12 +2,11 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import useCollaborativeDoc from '@/composables/CollaborativeDoc'
 
-// 中文注释：
 // 该组件用于快速在页面中测试协同编辑的连接与 awareness。默认假设 Editor.vue
 // 已经提供了 ydoc（provide('ydoc', ydoc)）并使用了 Collaboration extension。
 
 // 创建 composable：由于 Editor.vue 已经使用 Collaboration extension，传入 registerPlugins:false
-const collab = useCollaborativeDoc({ url: 'ws://localhost:1234', room: 'demo-room', registerPlugins: false })
+const collab = useCollaborativeDoc({ url: 'ws://47.101.63.170:1234', room: 'demo-room', registerPlugins: false })
 
 const connected = collab.connected
 

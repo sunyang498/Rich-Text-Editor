@@ -29,7 +29,7 @@ type UserMeta = {
  *  const collab = useCollaborativeDoc({ url: 'ws://192.168.1.100:1234', room: 'room1', registerPlugins: false })
  *
  *  // 场景 B：不使用 tiptap 的 Collaboration extension，而由本 composable 注册 y-prosemirror 插件
- *  const collab = useCollaborativeDoc({ url: 'ws://localhost:1234', room: 'room1' })
+ *  const collab = useCollaborativeDoc({ url: 'ws://47.101.63.170:1234', room: 'room1' })
  *
  * 局域网说明：如果客户端和 y-websocket 服务在同一局域网内（如家中或公司内网），
  * 可以直接把 provider 的 url 指向该服务的局域网 IP，例如：
@@ -50,7 +50,7 @@ type UserMeta = {
  *   npx y-websocket --port 1234
  */
 export function useCollaborativeDoc(options?: { url?: string; room?: string; user?: UserMeta; autoBind?: boolean; registerPlugins?: boolean }) {
-    const url = options?.url ?? 'ws://localhost:1234'
+    const url = options?.url ?? 'ws://47.101.63.170:1234'
     const room = options?.room ?? 'default-room'
     const user = options?.user ?? { name: 'Anonymous', color: '#ffa500' }
     const autoBind = options?.autoBind ?? true
