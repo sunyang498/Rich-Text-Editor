@@ -82,7 +82,7 @@ onBeforeUnmount(() => {
       <div v-if="!Object.keys(users).length">当前没有其他在线用户（或尚未同步 awareness 状态）</div>
     </div>
 
-    <details class="debug">
+    <!-- <details class="debug">
       <summary>调试与使用说明（中文）</summary>
       <ol>
         <li>确保本项目已经安装依赖（yjs, y-websocket 等），package.json 中已有依赖。</li>
@@ -96,7 +96,7 @@ onBeforeUnmount(() => {
         </li>
       </ol>
       <p>注意：销毁（destroy）会关闭 provider 并尝试销毁 ydoc；若 ydoc 是由 Editor.vue 提供（provide('ydoc', ydoc)），销毁可能影响 Editor 中的文档，慎用。</p>
-    </details>
+    </details> -->
   </div>
 </template>
 
