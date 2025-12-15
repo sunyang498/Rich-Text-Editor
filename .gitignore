@@ -34,3 +34,6 @@ coverage
 
 # Vitest
 __screenshots__/
+
+# 新增：忽略Electron打包产物
+electron-dist/
