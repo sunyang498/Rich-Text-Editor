@@ -8,6 +8,7 @@ import { useAutoCheck } from '@/composables/AutoGrammarCheck';
 const editor=useEditorContext()
 const originSeleT=ref({from:0,to:0})
 const isGrammarCheckActive=ref(false)
+const isCheckClosed=ref(false)
 const issues=ref<GrammarIssue[]>([])
 const {isAutoChecking,
         autoCheckEnable,
@@ -28,6 +29,12 @@ const selectedText=computed(()=>{
 const toggleGrammarCheck=async()=>{
     issues.value=await GrammarCheckService.checkText(selectedText.value)
     isGrammarCheckActive.value=true
+    isCheckClosed.value=false
+}
+
+const closeCheck=()=>{
+    isCheckClosed.value=true
+    isGrammarCheckActive.value=false
 }
 
 const fixAllIssues=()=>{
@@ -61,12 +68,13 @@ onMounted(()=>{
     </div>
 
     <!-- 语法问题面板 -->
-    <div v-if="isGrammarCheckActive && issues.length" class="grammar-panel">
+    <div v-if="isGrammarCheckActive && issues.length && !isCheckClosed" class="grammar-panel">
         <div class="panel-header">
             <h4>发现 {{ issues.length }} 个问题</h4>
-            <button @click="fixAllIssues" class="fix-all-btn">
+            <button class="close-btn" @click="closeCheck">×</button>
+            <!-- <button @click="fixAllIssues" class="fix-all-btn">
                 一键修正
-            </button>
+            </button> -->
         </div>
         <div class="issues-list">
             <div 

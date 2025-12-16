@@ -36,7 +36,7 @@ export function useAutoCheck(editor:any,grammarIssues:any){
             grammarIssues.value=issues
             issues.forEach((issue,index)=>{
                 const {position:{start,end},suggestion,type}=issue
-                editor.value?.chain().setTextSelection({from:start,to:end}).focus().setUnderline().run()
+                // editor.value?.chain().setTextSelection({from:start,to:end}).focus().setUnderline().run()
             })
             console.log(issues)
             console.log('over')
