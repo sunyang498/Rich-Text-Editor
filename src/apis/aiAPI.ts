@@ -1,26 +1,29 @@
 import axios from 'axios'
-const ZHIPU_API_URL='https://open.bigmodel.cn/api/paas/v4/chat/completions'
-const API_KEY='18c4bf4b164e4cff96919627b6e16ff1.4T7VD0xztCPNaLE0'
-export async function callAI(prompt:string):Promise<string> {
-    try{
-        const response=await axios.post(
+
+/** 从 Vite 环境变量读取，需 VITE_ 前缀才能在客户端侧访问 */
+const ZHIPU_API_URL = import.meta.env.VITE_ZHIPU_API_URL ?? 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
+const API_KEY = import.meta.env.VITE_ZHIPU_API_KEY ?? ''
+
+export async function callAI(prompt: string): Promise<string> {
+    try {
+        const response = await axios.post(
             ZHIPU_API_URL,
             {
-                model:'glm-4-flash',
-                messages:[
+                model: 'glm-4-flash',
+                messages: [
                     {
-                        role:'user',
-                        content:prompt
-                    }
+                        role: 'user',
+                        content: prompt,
+                    },
                 ],
-                stream:false
+                stream: false,
             },
             {
-                headers:{
-                    'Authorization':`Bearer ${API_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            }
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json',
+                },
+            },
         )
         return response.data.choices[0].message.content
     }catch(e){

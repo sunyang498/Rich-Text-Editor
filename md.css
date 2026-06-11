@@ -1,0 +1,62 @@
+/* 简历专用 - 纯白商务风 */
+body {
+  font-family: "Source Han Sans CN", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #222;
+  background: #fff;
+}
+
+/* 标题克制不浮夸 */
+h1 {
+  font-size: 22px;
+  text-align: center;
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+h2 {
+  font-size: 16px;
+  margin: 18px 0 8px 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
+  font-weight: 600;
+}
+h3 {
+  font-size: 15px;
+  margin: 12px 0 6px 0;
+  font-weight: 600;
+}
+
+/* 段落紧凑干净 */
+p {
+  margin: 6px 0;
+}
+
+/* 列表适配简历，无多余缩进 */
+ul, li {
+  margin: 4px 0;
+  padding-left: 6px;
+}
+
+/* 表格极简（技能/经历表格专用） */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+td, th {
+  border: 1px solid #ddd;
+  padding: 6px 10px;
+}
+
+/* 去掉所有背景、阴影 */
+pre, code {
+  background: #f9f9f9;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+/* 图片自适应简历 */
+img {
+  max-width: 100%;
+}

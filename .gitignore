@@ -14,6 +14,17 @@ dist-ssr
 coverage
 *.local
 
+# 环境变量（包含敏感密钥，禁止提交）
+.env
+.env.local
+.env.*.local
+
+# 忽略项目中所有 .md 后缀文件
+*.md
+
+# 放行README.md
+!README.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
