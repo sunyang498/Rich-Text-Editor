@@ -18,6 +18,7 @@ coverage
 .env
 .env.local
 .env.*.local
+.env.example
 
 # 忽略项目中所有 .md 后缀文件
 *.md
