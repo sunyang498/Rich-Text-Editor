@@ -13,18 +13,17 @@ export const LineHeight = Extension.create({
     name: 'lineHeight',
     addOptions() {
         return {
-            types: ['textStyle'], // 确保应用到 textStyle
+            types: ['textStyle', 'paragraph', 'heading'],
         }
     },
     addGlobalAttributes() {
         return [
         {
-            types: ['textStyle'], // 应用到文本样式标记
+            types: ['textStyle'],
             attributes: {
                 lineHeight: {
                     default: null,
                     parseHTML: element => {
-                        // 尝试从 span 或父元素获取行高
                         let lineHeight = element.style.lineHeight
                         if (!lineHeight && element.parentElement) {
                             lineHeight = element.parentElement.style.lineHeight
@@ -35,10 +34,25 @@ export const LineHeight = Extension.create({
                         if (!attributes.lineHeight) {
                             return {}
                         }
-                        // 确保样式应用到内联元素
                         return {
                             style: `line-height: ${attributes.lineHeight}`,
                         }
+                    },
+                },
+            },
+        },
+        {
+            types: ['paragraph', 'heading'],
+            attributes: {
+                lineHeight: {
+                    default: null,
+                    parseHTML: element => {
+                        const lh = element.style.lineHeight
+                        return lh ? lh.replace(/['"]+/g, '') : null
+                    },
+                    renderHTML: attributes => {
+                        if (!attributes.lineHeight) return {}
+                        return { style: `line-height: ${attributes.lineHeight}` }
                     },
                 },
             },
@@ -49,26 +63,31 @@ export const LineHeight = Extension.create({
     addCommands() {
         return {
             setLineHeight: (lineHeight: string) => ({ chain, state }) => {
-                console.log('设置行高:', lineHeight)
-                // 确保有选中内容
                 const { from, to } = state.selection
-                const hasSelection = from !== to
-                if (hasSelection) {
-                // 有选中文本，应用文本标记
-                return chain()
-                    .setMark('textStyle', { lineHeight })
-                    .run()
-                } else {
-                // 没有选中文本，尝试应用到整个块
-                return chain()
-                    .setMark('textStyle', { lineHeight })
-                    .run()
+                if (from !== to) {
+                    // 有选中文本：应用行内 textStyle mark
+                    return chain()
+                        .setMark('textStyle', { lineHeight })
+                        .run()
                 }
-            },
-            unsetLineHeight: () => ({ chain }) => {
+                // 无选中文本：应用到当前块级节点，避免 mark 悬空
+                const nodeType = state.selection.$head.parent.type.name
                 return chain()
-                .setMark('textStyle', { lineHeight: null })
-                .run()
+                    .updateAttributes(nodeType, { lineHeight })
+                    .run()
+            },
+            unsetLineHeight: () => ({ chain, state }) => {
+                const { from, to } = state.selection
+                if (from !== to) {
+                    return chain()
+                        .setMark('textStyle', { lineHeight: null })
+                        .removeEmptyTextStyle()
+                        .run()
+                }
+                const nodeType = state.selection.$head.parent.type.name
+                return chain()
+                    .updateAttributes(nodeType, { lineHeight: null })
+                    .run()
             },
         }
     },

@@ -81,9 +81,6 @@ const removeLink=()=>{
 const cancelLink=()=>{
     showLinkDialog.value=false
 }
-const selectedText=computed(()=>{
-    return false
-})
 </script>
 
 <template>
@@ -113,7 +110,7 @@ const selectedText=computed(()=>{
                 </div>
 
                 <!-- 链接文本输入（有选中文本时才显示） -->
-                <div class="form-group" v-if="selectedText">
+                <div class="form-group" v-if="selectText">
                     <label>链接文本</label>
                     <input
                         v-model="linkText"

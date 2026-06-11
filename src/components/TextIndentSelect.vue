@@ -7,9 +7,11 @@ const editor = useEditorContext()
 // 是否显示当前缩进值
 const showCurrentValue = true
 
-// 获取当前缩进值
+// 获取当前缩进值（从当前块级节点属性读取）
 const currentIndent = computed(() => {
-    return editor.value?.getAttributes('textStyle')?.textIndent || '0em'
+    if (!editor.value) return '0em'
+    const node = editor.value.state.selection.$head.parent
+    return node.attrs.textIndent || '0em'
 })
 
 // 提取数字部分用于显示和计算

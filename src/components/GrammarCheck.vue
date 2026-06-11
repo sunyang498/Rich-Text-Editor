@@ -95,7 +95,6 @@ onMounted(()=>{
             </div>
         </div>
     </div>
-    <GrammarMark></GrammarMark>
 </template>
 
 <style>

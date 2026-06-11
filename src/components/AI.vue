@@ -22,11 +22,15 @@ const selectedText=computed(()=>{
     if(!editor.value)
         return ''
     const {from,to}=editor.value.state.selection
-    originSeleT.value={from,to}
     return from===to?'':editor.value.state.doc.textBetween(from,to)
 })
 
 const openAI=()=>{
+    // 在打开面板时保存当前选区位置，避免 computed 副作用
+    if (editor.value) {
+        const { from, to } = editor.value.state.selection
+        originSeleT.value = { from, to }
+    }
     isVisible.value=true
 }
 const closeAI=()=>{

@@ -47,27 +47,29 @@ export const TextIndent = Extension.create<TextIndentOptions>({
 
     addCommands() {
         return {
-            setTextIndent: (indent: string) => ({ chain }) => {
-                return chain().setMark('textStyle', { textIndent: indent }).run()
+            setTextIndent: (indent: string) => ({ chain, state }) => {
+                const nodeType = state.selection.$head.parent.type.name
+                return chain().updateAttributes(nodeType, { textIndent: indent }).run()
             },
-            unsetTextIndent: () => ({ chain }) => {
-                return chain().setMark('textStyle', { textIndent: null }).removeEmptyTextStyle().run()
+            unsetTextIndent: () => ({ chain, state }) => {
+                const nodeType = state.selection.$head.parent.type.name
+                return chain().updateAttributes(nodeType, { textIndent: null }).run()
             },
             increaseIndent: () => ({ chain, state }) => {
-                const currentIndent = state.selection.$head.marks().find(mark => mark.type.name === 'textStyle')?.attrs.textIndent
+                const node = state.selection.$head.parent
+                const currentIndent = node.attrs.textIndent
                 const currentValue = currentIndent ? parseFloat(currentIndent) : 0
                 const newValue = currentValue + 2
-                
-                return chain().setMark('textStyle', { textIndent: `${newValue}em` }).run()
+                return chain().updateAttributes(node.type.name, { textIndent: `${newValue}em` }).run()
             },
             decreaseIndent: () => ({ chain, state }) => {
-                const currentIndent = state.selection.$head.marks().find(mark => mark.type.name === 'textStyle')?.attrs.textIndent
+                const node = state.selection.$head.parent
+                const currentIndent = node.attrs.textIndent
                 const currentValue = currentIndent ? parseFloat(currentIndent) : 0
                 const newValue = Math.max(0, currentValue - 2)
-                if (newValue === 0) {
-                    return chain().setMark('textStyle', { textIndent: null }).removeEmptyTextStyle().run()
-                }
-                return chain().setMark('textStyle', { textIndent: `${newValue}em` }).run()
+                return chain().updateAttributes(node.type.name, {
+                    textIndent: newValue === 0 ? null : `${newValue}em`,
+                }).run()
             },
         }
     },
