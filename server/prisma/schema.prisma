@@ -1,0 +1,75 @@
+// Spike-2 Prisma schema（MySQL 8）—— 4 张表，对应 v2 审批范围
+// 注：正文采用 append-only（y_doc_updates）+ 打开全量重放，故无快照列
+// 字符集：utf8mb4；正文 BLOB 用 MediumBlob（16MB，防大编辑超 BLOB 64KB 上限）
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+/// 用户表
+model User {
+  id            String   @id @default(uuid()) @db.VarChar(36)
+  email         String   @unique @db.VarChar(255)
+  passwordHash  String   @map("password_hash") @db.VarChar(255)
+  nickname      String   @default("未命名用户") @db.VarChar(64)
+  createdAt     DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+
+  documents     Document[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+/// 文档表（owner 私有 + is_public 公开只读；软删除 deleted_at）
+model Document {
+  id           String   @id @default(uuid()) @db.VarChar(36)
+  ownerId      String   @map("owner_id") @db.VarChar(36)
+  title        String   @default("无标题文档") @db.VarChar(255)
+  isPublic     Boolean  @default(false) @map("is_public")
+  lastEditedAt DateTime @default(now()) @map("last_edited_at") @db.DateTime(0)
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+  deletedAt    DateTime? @map("deleted_at") @db.DateTime(0)
+
+  owner         User       @relation(fields: [ownerId], references: [id])
+  yDocUpdates   YDocUpdate[]
+
+  @@index([ownerId, deletedAt])
+  @@index([lastEditedAt])
+  @@map("documents")
+}
+
+/// Yjs 增量日志（append-only；id 自增即顺序；打开文档=全量重放）
+model YDocUpdate {
+  id         BigInt   @id @default(autoincrement())
+  documentId String   @map("document_id") @db.VarChar(36)
+  update     Bytes    @db.MediumBlob
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(0)
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, id])
+  @@map("y_doc_updates")
+}
+
+/// 刷新令牌（可撤销）
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.VarChar(36)
+  userId    String    @map("user_id") @db.VarChar(36)
+  tokenHash String    @unique @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime  @map("expires_at") @db.DateTime(0)
+  revokedAt DateTime? @map("revoked_at") @db.DateTime(0)
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}

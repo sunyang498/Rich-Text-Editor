@@ -18,7 +18,8 @@ coverage
 .env
 .env.local
 .env.*.local
-.env.example
+# .env.example 作为模板允许提交
+!.env.example
 
 # 忽略项目中所有 .md 后缀文件
 *.md
