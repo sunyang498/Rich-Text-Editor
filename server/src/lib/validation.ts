@@ -21,3 +21,18 @@ export const refreshSchema = z.object({
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RefreshInput = z.infer<typeof refreshSchema>;
+
+// ---- 文档（Step2） ----
+export const createDocSchema = z.object({
+  title: z.string().trim().min(1).max(255).optional(),
+});
+export const renameDocSchema = z.object({
+  title: z.string().trim().min(1, '标题不能为空').max(255),
+});
+export const listDocsSchema = z.object({
+  cursor: z.string().optional(), // 上一页最后一条 last_edited_at (ISO)
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+});
+
+export type CreateDocInput = z.infer<typeof createDocSchema>;
+export type RenameDocInput = z.infer<typeof renameDocSchema>;

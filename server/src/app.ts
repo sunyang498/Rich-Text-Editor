@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './modules/auth/auth.routes';
+import docsRoutes from './modules/docs/docs.routes';
 import { errorHandler, HttpError } from './lib/http';
 import { env, loadEnv } from './lib/env';
 
@@ -51,6 +52,7 @@ export function createApp() {
 
   // 业务路由
   app.use('/api/v1/auth', authRoutes);
+  app.use('/api/v1/docs', docsRoutes);
 
   // 404
   app.use((_req, res) => {
