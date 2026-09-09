@@ -26,9 +26,15 @@ export const Err = {
   Conflict: (m = '资源冲突') => new HttpError(409, 40901, m),
 } as const;
 
+/** JSON replacer：BigInt → String（Prisma 自增 id 为 BigInt；S4 预防 res.json 抛错） */
+function jsonReplacer(_key: string, value: unknown): unknown {
+  return typeof value === 'bigint' ? value.toString() : value;
+}
+
 /** 成功响应 */
 export function ok(res: Response, data: unknown, message = 'ok'): void {
-  res.json({ code: 0, data, message });
+  const payload = { code: 0, data, message };
+  res.status(200).type('application/json').send(JSON.stringify(payload, jsonReplacer));
 }
 
 /** 包装异步 handler，自动把 reject 交给 error 中间件 */
@@ -40,10 +46,24 @@ export function wrap(
   };
 }
 
+/** Prisma 已知错误码映射（避免唯一约束等落到 500） */
+function mapPrismaError(err: unknown): HttpError | null {
+  if (typeof err !== 'object' || err === null) return null;
+  const code = (err as { code?: string }).code;
+  if (code === 'P2002') return Err.Conflict('资源已存在（唯一约束冲突）'); // 并发注册同邮箱（B2）
+  if (code === 'P2025') return Err.NotFound('目标记录不存在');
+  return null;
+}
+
 /** 全局错误处理中间件 */
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction): void {
   if (err instanceof HttpError) {
     res.status(err.status).json({ code: err.code, data: null, message: err.message });
+    return;
+  }
+  const mapped = mapPrismaError(err);
+  if (mapped) {
+    res.status(mapped.status).json({ code: mapped.code, data: null, message: mapped.message });
     return;
   }
   // 未知错误：不向客户端泄露内部细节

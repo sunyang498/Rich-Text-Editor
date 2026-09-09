@@ -1,4 +1,5 @@
-// Spike-2 Prisma schema（MySQL 8）—— 4 张表，对应 v2 审批范围
+// server 正式 Prisma schema（本机 MySQL 9.2；部署需同版本或上线前 migrate deploy 复验）
+// 4 张表：users / documents / y_doc_updates / refresh_tokens，对应 v2 审批范围
 // 注：正文采用 append-only（y_doc_updates）+ 打开全量重放，故无快照列
 // 字符集：utf8mb4；正文 BLOB 用 MediumBlob（16MB，防大编辑超 BLOB 64KB 上限）
 

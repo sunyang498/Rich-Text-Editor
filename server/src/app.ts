@@ -5,7 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './modules/auth/auth.routes';
-import { errorHandler } from './lib/http';
+import { errorHandler, HttpError } from './lib/http';
 import { env, loadEnv } from './lib/env';
 
 loadEnv();
@@ -16,16 +16,19 @@ export function createApp() {
 
   app.use(express.json({ limit: '1mb' }));
 
-  // CORS：允许配置的前端源（Step3 也可用 Vite proxy 规避）
+  // CORS：无 Origin（curl/同源/服务端）放行；跨源必须命中白名单；空白名单=拒绝一切跨源（S3）
   app.use(
     cors({
       origin(origin, callback) {
-        const allowed = env.CORS_ORIGINS;
-        if (!origin || allowed.length === 0 || allowed.includes(origin)) {
+        if (!origin) {
           callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
+          return;
         }
+        if (env.CORS_ORIGINS.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+        callback(new HttpError(403, 40301, 'Not allowed by CORS')); // 403 而非 500
       },
       credentials: true,
     })

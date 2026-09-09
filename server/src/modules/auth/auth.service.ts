@@ -55,18 +55,20 @@ export async function login(input: LoginInput) {
   return { user: publicUser(user), tokens };
 }
 
-/** 刷新令牌（轮换：旧 refresh 撤销，签发新 pair） */
+/** 刷新令牌（轮换：旧 refresh 原子撤销，签发新 pair） */
 export async function refresh(refreshToken: string) {
   const tokenHash = sha256(refreshToken);
-  const row = await prisma.refreshToken.findUnique({ where: { tokenHash } });
-  if (!row || row.revokedAt || row.expiresAt < new Date()) {
+  // B1：原子条件撤销——仅「未撤销且未过期」的行能被抢占；count===1 才继续
+  // 并发重放时两个请求只有一个能拿到 count=1，另一个走 InvalidRefresh，杜绝竞态重放
+  const now = new Date();
+  const revoked = await prisma.refreshToken.updateMany({
+    where: { tokenHash, revokedAt: null, expiresAt: { gt: now } },
+    data: { revokedAt: now },
+  });
+  if (revoked.count !== 1) {
     throw Err.InvalidRefresh();
   }
-  // 轮换：旧令牌立即失效（防止重放）
-  await prisma.refreshToken.update({
-    where: { id: row.id },
-    data: { revokedAt: new Date() },
-  });
+  const row = await prisma.refreshToken.findUniqueOrThrow({ where: { tokenHash } });
   const tokens = await createTokenPair(row.userId);
   return { tokens };
 }
