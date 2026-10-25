@@ -7,7 +7,7 @@ import http from 'http';
 import crossws from 'crossws/adapters/node';
 import { Hocuspocus, type WebSocketLike } from '@hocuspocus/server';
 import { createApp } from './app';
-import { createCollabServer } from './collab/server';
+import { createCollabServer, flushPendingUpdates } from './collab/server';
 import { registerCollabCloser } from './lib/collab-registry';
 import { env, loadEnv } from './lib/env';
 
@@ -61,11 +61,16 @@ httpServer.listen(port, () => {
   console.log(`[biyan-server] listening http://localhost:${port} (REST /api/v1 + WSS /collaboration)`);
 });
 
-// 优雅退出：onChange 为每事务即时落库，无 debounce 挂起，可安全退出
-function shutdown(): void {
+// 优雅退出：先 flush 防抖队列中的协同增量，再关闭 HTTP
+async function shutdown(): Promise<void> {
   console.log('[biyan-server] shutting down');
+  try {
+    await flushPendingUpdates();
+  } catch (e) {
+    console.error('[biyan-server] flush pending updates failed:', e);
+  }
   httpServer.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 2000).unref();
 }
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+process.on('SIGINT', () => void shutdown());
+process.on('SIGTERM', () => void shutdown());

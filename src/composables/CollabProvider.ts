@@ -27,6 +27,16 @@ export interface CollabOptions {
   ticket: string
   /** 重连时重新拉取票据（collab ticket 仅 60s，过期后自动续签） */
   getTicket?: () => Promise<string>
+  /** awareness 用户信息（昵称/颜色），用于协同光标与在线列表 */
+  user?: { name: string; color?: string }
+}
+
+/** 稳定的用户光标颜色（按 id/昵称哈希，避免随机撞色） */
+export function colorForUser(seed: string): string {
+  const palette = ['#2563eb', '#16a34a', '#dc2626', '#9333ea', '#ea580c', '#0891b2', '#be123c']
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) | 0
+  return palette[Math.abs(hash) % palette.length] ?? '#2563eb'
 }
 
 export function useCollabProvider(opts: CollabOptions) {
@@ -49,6 +59,15 @@ export function useCollabProvider(opts: CollabOptions) {
     // P1-4：断线/重连期间重置 synced，避免“已同步”状态过期
     if (data.status !== 'connected') synced.value = false
   })
+
+  // Step4：向 awareness 写入真实用户昵称/颜色（协同光标与在线列表）
+  if (opts.user) {
+    try {
+      provider.awareness?.setLocalStateField('user', opts.user)
+    } catch {
+      /* noop */
+    }
+  }
   provider.on('synced', () => {
     synced.value = true
   })

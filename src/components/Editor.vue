@@ -16,8 +16,9 @@ import Link from '@tiptap/extension-link'
 import OnlineCollaboration from './OnlineCollaboration.vue';
 import * as Y from 'yjs'
 import Collaboration from '@tiptap/extension-collaboration'
-import { CollabProviderKey, useCollabProvider } from '@/composables/CollabProvider'
+import { CollabProviderKey, colorForUser, useCollabProvider } from '@/composables/CollabProvider'
 import { docsApi } from '@/apis/docs'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps<{ docId?: string; ticket?: string }>()
 
@@ -25,6 +26,9 @@ const ydoc = new Y.Doc()
 provide('ydoc', ydoc)
 
 // Step3：按文档建立协同连接（房间名 = docId；token = collab ticket）
+const auth = useAuthStore()
+const collabUser = auth.user?.nickname || auth.user?.email || '匿名'
+
 const collab = props.docId && props.ticket
   ? useCollabProvider({
       ydoc,
@@ -32,6 +36,8 @@ const collab = props.docId && props.ticket
       ticket: props.ticket,
       // P0-2：ticket 60s 过期，重连时重新 open 文档换新票
       getTicket: () => docsApi.open(props.docId!).then((r) => r.collabTicket),
+      // Step4：awareness 显示真实昵称 + 稳定颜色
+      user: { name: collabUser, color: colorForUser(auth.user?.id ?? collabUser) },
     })
   : null
 provide(CollabProviderKey, collab?.provider ?? null)
