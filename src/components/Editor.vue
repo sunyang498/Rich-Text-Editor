@@ -17,6 +17,7 @@ import OnlineCollaboration from './OnlineCollaboration.vue';
 import * as Y from 'yjs'
 import Collaboration from '@tiptap/extension-collaboration'
 import { CollabProviderKey, useCollabProvider } from '@/composables/CollabProvider'
+import { docsApi } from '@/apis/docs'
 
 const props = defineProps<{ docId?: string; ticket?: string }>()
 
@@ -25,7 +26,13 @@ provide('ydoc', ydoc)
 
 // Step3：按文档建立协同连接（房间名 = docId；token = collab ticket）
 const collab = props.docId && props.ticket
-  ? useCollabProvider({ ydoc, docId: props.docId, ticket: props.ticket })
+  ? useCollabProvider({
+      ydoc,
+      docId: props.docId,
+      ticket: props.ticket,
+      // P0-2：ticket 60s 过期，重连时重新 open 文档换新票
+      getTicket: () => docsApi.open(props.docId!).then((r) => r.collabTicket),
+    })
   : null
 provide(CollabProviderKey, collab?.provider ?? null)
 

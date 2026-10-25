@@ -24,6 +24,22 @@ export const tokenStore = {
   },
 }
 
+export type UnauthorizedHandler = () => void
+let unauthorizedHandler: UnauthorizedHandler | null = null
+
+/** 由 main.ts 注册：同步清空 Pinia 登录态并用 router 跳转（避免 location.hash 绕过路由） */
+export function setUnauthorizedHandler(fn: UnauthorizedHandler): void {
+  unauthorizedHandler = fn
+}
+
+function notifyUnauthorized(): void {
+  if (unauthorizedHandler) {
+    unauthorizedHandler()
+    return
+  }
+  if (!location.hash.startsWith('#/login')) location.hash = '#/login'
+}
+
 export const http = axios.create({ baseURL: BASE, timeout: 15000 })
 
 http.interceptors.request.use((config) => {
@@ -69,9 +85,13 @@ http.interceptors.response.use(
         config.headers = (config.headers as Record<string, string>) ?? {}
         ;(config.headers as Record<string, string>).Authorization = `Bearer ${newToken}`
         return http(config as never)
-      } catch {
-        tokenStore.clear()
-        if (!location.hash.startsWith('#/login')) location.hash = '#/login'
+      } catch (e) {
+        // P1-1：仅凭证失效（401/403）清登录态；网络抖动保留 token，待用户重试
+        const status = (e as { response?: { status?: number } })?.response?.status
+        if (status === 401 || status === 403) {
+          tokenStore.clear()
+          notifyUnauthorized()
+        }
       }
     }
     return Promise.reject(error)

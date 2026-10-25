@@ -61,16 +61,21 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** 本地清理（供 http 拦截器在凭证失效时同步 Pinia 状态） */
+  function clearLocal(): void {
+    tokenStore.clear()
+    user.value = null
+    loggedIn.value = false
+  }
+
   async function logout(): Promise<void> {
     const refreshToken = tokenStore.getRefresh()
     try {
       if (refreshToken) await authApi.logout(refreshToken)
     } finally {
-      tokenStore.clear()
-      user.value = null
-      loggedIn.value = false
+      clearLocal()
     }
   }
 
-  return { user, loading, error, isLoggedIn, register, login, restore, logout }
+  return { user, loading, error, isLoggedIn, register, login, restore, logout, clearLocal }
 })
