@@ -17,6 +17,10 @@ import { verifyCollabTicket } from '../lib/token';
 import { getUpdates, appendUpdate } from '../lib/y-store';
 
 export function createCollabServer(): Hocuspocus {
+  // last_edited_at 节流（避免每事务都写 documents 表）
+  const lastTouch = new Map<string, number>();
+  const TOUCH_THROTTLE_MS = 2000;
+
   return new Hocuspocus({
     async onAuthenticate({ documentName, token, connectionConfig }) {
       const claim = verifyCollabTicket(String(token ?? ''));
@@ -40,9 +44,19 @@ export function createCollabServer(): Hocuspocus {
       return ydoc;
     },
 
-    // 每次事务变更：增量 append 落库
+    // 每次事务变更：增量 append 落库；并（节流）更新文档最后编辑时间（列表排序依据）
     async onChange({ documentName, update }) {
       await appendUpdate(documentName, update);
+
+      const now = Date.now();
+      if (now - (lastTouch.get(documentName) ?? 0) >= TOUCH_THROTTLE_MS) {
+        lastTouch.set(documentName, now);
+        await prisma.document
+          .update({ where: { id: documentName }, data: { lastEditedAt: new Date() } })
+          .catch(() => {
+            /* 文档可能已被软删，忽略 */
+          });
+      }
     },
   });
 }

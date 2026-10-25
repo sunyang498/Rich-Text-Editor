@@ -7,6 +7,7 @@ import { prisma } from '../../lib/prisma';
 import { Err } from '../../lib/http';
 import { signCollabTicket } from '../../lib/token';
 import { emptyYDocUpdate } from '../../lib/y-store';
+import { closeDocConnections } from '../../lib/collab-registry';
 import type { CreateDocInput } from '../../lib/validation';
 
 const LIST_LIMIT_DEFAULT = 20;
@@ -76,11 +77,12 @@ export async function renameDoc(userId: string, docId: string, title: string) {
   return dto(doc);
 }
 
-/** 软删除（owner） */
+/** 软删除（owner）；成功后主动断开该文档的在线协同连接（E2） */
 export async function removeDoc(userId: string, docId: string): Promise<void> {
   const r = await prisma.document.updateMany({
     where: { id: docId, ownerId: userId, deletedAt: null },
     data: { deletedAt: new Date() },
   });
   if (r.count === 0) throw Err.NotFound('文档不存在或无权访问');
+  closeDocConnections(docId);
 }
