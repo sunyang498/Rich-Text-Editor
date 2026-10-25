@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, provide, onBeforeUnmount } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import { TextStyle,BackgroundColor } from '@tiptap/extension-text-style';
@@ -16,15 +16,32 @@ import Link from '@tiptap/extension-link'
 import OnlineCollaboration from './OnlineCollaboration.vue';
 import * as Y from 'yjs'
 import Collaboration from '@tiptap/extension-collaboration'
-import { provide } from 'vue';
+import { CollabProviderKey, useCollabProvider } from '@/composables/CollabProvider'
 
-const ydoc=new Y.Doc()
-provide('ydoc',ydoc)
+const props = defineProps<{ docId?: string; ticket?: string }>()
+
+const ydoc = new Y.Doc()
+provide('ydoc', ydoc)
+
+// Step3：按文档建立协同连接（房间名 = docId；token = collab ticket）
+const collab = props.docId && props.ticket
+  ? useCollabProvider({ ydoc, docId: props.docId, ticket: props.ticket })
+  : null
+provide(CollabProviderKey, collab?.provider ?? null)
+
+onBeforeUnmount(() => {
+  try { ydoc.destroy() } catch { /* noop */ }
+})
 
 const editor = useEditor({
-    content: '<p>开始编辑你的内容...</p >',
+    content: '<p></p>',
     extensions: [
-        StarterKit,
+        // v3 StarterKit 已内置 link / undoRedo：link 由下方自定义配置接管，
+        // undoRedo 与 Collaboration 自带历史冲突，故关闭
+        StarterKit.configure({
+            link: false,
+            undoRedo: false,
+        }),
         TextStyle,
         BackgroundColor,
         FontSize,

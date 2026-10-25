@@ -19,6 +19,18 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // 关键：允许局域网设备访问（监听所有IP）
     port: 5173, // Vite 默认端口（可自定义，如 8080）
-    allowedHosts: true // 开发环境方便，允许所有主机（无需手动加域名）
+    allowedHosts: true, // 开发环境方便，允许所有主机（无需手动加域名）
+    // Step3：开发期将 REST 与 WSS 代理到本地 server，避免跨域并统一同源
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/collaboration': {
+        target: 'http://localhost:3000',
+        ws: true,
+        changeOrigin: true,
+      },
+    },
   }
 })

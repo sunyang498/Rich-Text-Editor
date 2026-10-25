@@ -1,85 +1,92 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import useCollaborativeDoc from '@/composables/CollaborativeDoc'
+import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
+import { CollabProviderKey } from '@/composables/CollabProvider'
 
-// 该组件用于快速在页面中测试协同编辑的连接与 awareness。默认假设 Editor.vue
-// 已经提供了 ydoc（provide('ydoc', ydoc)）并使用了 Collaboration extension。
+interface AwarenessState {
+  user?: { name?: string; color?: string; id?: string | number }
+}
+interface CollabProviderLike {
+  awareness: {
+    getStates: () => Map<number, AwarenessState>
+    on: (event: string, cb: () => void) => void
+    off: (event: string, cb: () => void) => void
+  }
+  on: (event: string, cb: (data: { status: string }) => void) => void
+  off: (event: string, cb: (data: { status: string }) => void) => void
+}
 
-// 创建 composable：由于 Editor.vue 已经使用 Collaboration extension，传入 registerPlugins:false
-const collab = useCollaborativeDoc({ url: 'ws://47.101.63.170:1234', room: 'demo-room', registerPlugins: false })
+// 由 Editor.vue 注入（当前文档的 Hocuspocus provider）
+const provider = inject<CollabProviderLike | null>(CollabProviderKey, null)
 
-const connected = collab.connected
+const connected = ref(false)
+const users = ref<Record<string, AwarenessState>>({})
+const userList = computed(() => Object.entries(users.value))
 
-// 从 provider.awareness 中读取当前的在线用户状态（返回 Map-like 结构）
-const users = ref<Record<string, any>>({})
-
-function refreshUsers() {
+function refreshUsers(): void {
+  if (!provider) {
+    users.value = {}
+    return
+  }
+  const entries: Record<string, AwarenessState> = {}
   try {
-    const states = collab.provider.awareness.getStates()
-    const entries: Record<string, any> = {}
-    // awareness.getStates() 返回 Map 的迭代器
-    for (const [key, val] of states) {
+    for (const [key, val] of provider.awareness.getStates()) {
       entries[String(key)] = val
     }
-    users.value = entries
-  } catch (e) {
-    users.value = {}
+  } catch {
+    /* noop */
   }
+  users.value = entries
 }
 
-function toggleConnection() {
-  if (connected.value) {
-    // 断开：优先尝试 disconnect（若存在），否则作为回退使用 destroy
-    try {
-      // @ts-ignore
-      collab.provider.disconnect()
-    } catch (e) {
-      try { collab.destroy() } catch {}
-    }
-  } else {
-    try { collab.provider.connect() } catch (e) {}
-  }
-}
-
-function destroyAll() {
-  collab.destroy()
+function onStatus(data: { status: string }): void {
+  connected.value = data.status === 'connected'
 }
 
 onMounted(() => {
-  // 监听 awareness 更新并刷新用户列表
-  try { collab.provider.awareness.on('change', refreshUsers) } catch (e) {}
+  if (!provider) return
+  provider.on('status', onStatus)
+  try {
+    provider.awareness.on('change', refreshUsers)
+  } catch {
+    /* noop */
+  }
   refreshUsers()
 })
 
 onBeforeUnmount(() => {
-  try { collab.provider.awareness.off('change', refreshUsers) } catch (e) {}
+  if (!provider) return
+  try {
+    provider.off('status', onStatus)
+  } catch {
+    /* noop */
+  }
+  try {
+    provider.awareness.off('change', refreshUsers)
+  } catch {
+    /* noop */
+  }
 })
 </script>
 
 <template>
   <div class="online-collab">
-    <h3>在线协作测试面板</h3>
-    <p class="note">此组件用于在页面内快速测试协作连接与 awareness（在线用户）。包含中文说明与调试步骤。</p>
+    <h3>在线协作</h3>
+    <p class="note">实时连接状态与在线成员（昵称/光标颜色）。</p>
 
     <div class="status">
       <strong>连接状态：</strong>
       <span :class="{ connected: connected, disconnected: !connected }">{{ connected ? '已连接' : '未连接' }}</span>
     </div>
 
-    <div class="controls">
-      <button @click="toggleConnection">{{ connected ? '断开连接' : '连接' }}</button>
-      <button @click="destroyAll">销毁（关闭 provider & ydoc）</button>
-    </div>
-
     <div class="users">
       <strong>在线用户：</strong>
       <ul>
-        <li v-for="(u, id) in users" :key="id">
+        <li v-for="[id, u] in userList" :key="id">
           <span class="dot" :style="{ background: u.user?.color ?? '#999' }"></span>
-          {{ u.user?.name ?? '匿名' }} <small>({{ id }})</small>
+          {{ u.user?.name ?? '匿名' }}
         </li>
       </ul>
-      <div v-if="!Object.keys(users).length">当前没有其他在线用户（或尚未同步 awareness 状态）</div>
+      <div v-if="!userList.length">当前没有其他在线用户（或尚未同步 awareness 状态）</div>
     </div>
 
     <!-- <details class="debug">
