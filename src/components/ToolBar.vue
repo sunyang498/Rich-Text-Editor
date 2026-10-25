@@ -19,10 +19,18 @@ import GrammarCheck from './GrammarCheck.vue'
 // 获取编辑器实例
 const editor = useEditorContext()
 
+// M2-3：只读模式（viewer / 匿名）——前端置灰 + 禁用交互，服务端仍会拦上行 update
+const props = defineProps<{ readOnly?: boolean }>()
+
 </script>
 
 <template>
-    <div class="toolbar">
+    <div
+        class="toolbar"
+        :class="{ readonly: props.readOnly }"
+        :aria-disabled="props.readOnly ? 'true' : undefined"
+        :title="props.readOnly ? '只读模式：没有编辑权限' : undefined"
+    >
         <div class="toolbar-left">
             <!-- 主要格式化按钮（可水平滚动） -->
             <div class="group">
@@ -52,7 +60,7 @@ const editor = useEditorContext()
         <div class="toolbar-right">
             <EditControl />
             <AI />
-            <GrammarCheck />
+            <!-- <GrammarCheck /> -->
         </div>
     </div>
 </template>
@@ -76,6 +84,10 @@ const editor = useEditorContext()
 .toolbar-left .group { display:flex; gap:8px; align-items:center; white-space: nowrap }
 .toolbar-left .group > * { display: inline-flex }
 .toolbar-right { display:flex; gap:8px; align-items:center }
+
+/* M2-3：只读态：整体置灰且不接收指针事件（键盘输入由 editor.setEditable(false) 拦） */
+.toolbar.readonly { opacity: 0.5; cursor: not-allowed }
+.toolbar.readonly * { pointer-events: none !important }
 
 /* 手机端：工具栏固定于顶部，扩大交互目标并改善触摸滚动体验 */
 @media (max-width: 600px) {

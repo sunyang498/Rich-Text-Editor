@@ -34,5 +34,11 @@ export const listDocsSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 
+// ---- 公开只读（M2） ----
+export const setPublicSchema = z.object({
+  isPublic: z.boolean(),
+});
+
 export type CreateDocInput = z.infer<typeof createDocSchema>;
 export type RenameDocInput = z.infer<typeof renameDocSchema>;
+export type SetPublicInput = z.infer<typeof setPublicSchema>;

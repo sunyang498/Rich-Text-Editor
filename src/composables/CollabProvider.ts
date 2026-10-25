@@ -74,12 +74,17 @@ export function useCollabProvider(opts: CollabOptions) {
 
   // P0-2：认证失败时主动重连（token 为函数，会重新拉取新票）；2s 防抖避免失败循环
   let lastRetryAt = 0
+  let authRetryCount = 0
+  const MAX_AUTH_RETRY = 3 // 权限被撤销后不无限重试（避免匿名页面每 2s 打一次 401）
   provider.on('authenticationFailed', async () => {
     authFailed.value = true
     connected.value = false
+    synced.value = false
+    if (authRetryCount >= MAX_AUTH_RETRY) return
     const now = Date.now()
     if (now - lastRetryAt < 2000) return
     lastRetryAt = now
+    authRetryCount += 1
     try {
       await provider.connect()
     } catch {
@@ -89,6 +94,27 @@ export function useCollabProvider(opts: CollabOptions) {
 
   provider.on('authenticated', () => {
     authFailed.value = false
+    authRetryCount = 0
+  })
+
+  /**
+   * M2：服务端主动下发 CLOSE（关闭公开 / 文档被删 / 权限撤销）
+   * Hocuspocus 的 closeConnections 只发 CLOSE 帧而不断开 socket，客户端必须自己断开重连，
+   * 让下一轮握手重新鉴权（无权限则会 authenticationFailed）。
+   * 注意：provider.disconnect() 会把 shouldConnect 置 false（不再自动重连），
+   * 所以必须显式 connect()，否则会永远停在“离线”。
+   */
+  provider.on('close', async () => {
+    connected.value = false
+    synced.value = false
+    if (authRetryCount >= MAX_AUTH_RETRY) return
+    authRetryCount += 1
+    try {
+      provider.disconnect()
+      await provider.connect()
+    } catch {
+      /* 由 authenticationFailed 接管失败态 */
+    }
   })
 
   onBeforeUnmount(() => {

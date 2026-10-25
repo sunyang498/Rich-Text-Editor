@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, provide, onBeforeUnmount } from 'vue'
+import { ref, provide, onBeforeUnmount, computed, watch } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import { TextStyle,BackgroundColor } from '@tiptap/extension-text-style';
@@ -20,14 +20,15 @@ import { CollabProviderKey, colorForUser, useCollabProvider } from '@/composable
 import { docsApi } from '@/apis/docs'
 import { useAuthStore } from '@/stores/auth'
 
-const props = defineProps<{ docId?: string; ticket?: string }>()
+const props = defineProps<{ docId?: string; ticket?: string; readOnly?: boolean }>()
 
 const ydoc = new Y.Doc()
 provide('ydoc', ydoc)
 
 // Step3：按文档建立协同连接（房间名 = docId；token = collab ticket）
 const auth = useAuthStore()
-const collabUser = auth.user?.nickname || auth.user?.email || '匿名'
+// M2：匿名访客（公开只读）显示为“访客”
+const collabUser = auth.user?.nickname || auth.user?.email || '访客'
 
 const collab = props.docId && props.ticket
   ? useCollabProvider({
@@ -48,6 +49,8 @@ onBeforeUnmount(() => {
 
 const editor = useEditor({
     content: '<p></p>',
+    // M2：viewer/匿名 → 编译器层面不可编辑（服务端还会再拦一次上行 update）
+    editable: !props.readOnly,
     extensions: [
         // v3 StarterKit 已内置 link / undoRedo：link 由下方自定义配置接管，
         // undoRedo 与 Collaboration 自带历史冲突，故关闭
@@ -91,6 +94,29 @@ const editor = useEditor({
 })
 provideEditor(editor)
 
+// 只读态变化时同步（同一组件实例被复用的情况）
+watch(
+  () => props.readOnly,
+  (v) => {
+    editor.value?.setEditable(!v)
+  }
+)
+
+/** M2-4 连接/保存状态文案 */
+const statusText = computed(() => {
+  if (!collab) return '未连接'
+  // 权限被撤销（关公开/文档删除/票据失效）：重连被服务端拒绝，不再冒充“已保存”
+  if (collab.authFailed.value && !collab.connected.value) return '无权访问 · 已断开'
+  if (!collab.connected.value) return '离线 · 重连中…'
+  if (!collab.synced.value) return '同步中…'
+  return '已保存'
+})
+const statusClass = computed(() => {
+  if (!collab) return 'off'
+  if (!collab.connected.value) return collab.authFailed.value ? 'denied' : 'pending'
+  return collab.synced.value ? 'ok' : 'pending'
+})
+
 const sidebarOpen = ref(true)
 const toggleSidebar = () => { sidebarOpen.value = !sidebarOpen.value }
 
@@ -99,8 +125,10 @@ const toggleSidebar = () => { sidebarOpen.value = !sidebarOpen.value }
 <template>
     <div class="editor-container">
         <div class="editor-header">
-            <ToolBar />
+            <ToolBar :read-only="!!readOnly" />
             <div class="header-actions">
+                <span class="collab-status" :class="statusClass">{{ statusText }}</span>
+                <span v-if="readOnly" class="readonly-badge">只读</span>
                 <button class="sidebar-toggle" @click="toggleSidebar" :aria-pressed="sidebarOpen">
                     {{ sidebarOpen ? '隐藏协作' : '显示协作' }}
                 </button>
@@ -170,6 +198,31 @@ const toggleSidebar = () => { sidebarOpen.value = !sidebarOpen.value }
     cursor: pointer;
     font-size: 13px;
 }
+
+/* M2-4：连接/保存状态 */
+.collab-status{
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+.collab-status.ok{ color:#15803d; background:#f0fdf4; border-color:#bbf7d0 }
+.collab-status.pending{ color:#b45309; background:#fffbeb; border-color:#fde68a }
+.collab-status.off{ color:#6b7280; background:#f3f4f6; border-color:#e5e7eb }
+.collab-status.denied{ color:#b91c1c; background:#fef2f2; border-color:#fecaca }
+
+/* M2-3：只读徒标 */
+.readonly-badge{
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    color:#9a3412;
+    background:#fff7ed;
+    border:1px solid #fed7aa;
+}
+
+div.editor-readonly .editor-content{ background:#fcfcfd }
 
 
 

@@ -42,9 +42,16 @@ function onStatus(data: { status: string }): void {
   connected.value = data.status === 'connected'
 }
 
+/** 服务端下发 CLOSE（权限撤销/文档删除）或鉴权失败：立刻反映为断开 */
+function markDisconnected(): void {
+  connected.value = false
+}
+
 onMounted(() => {
   if (!provider) return
   provider.on('status', onStatus)
+  provider.on('close', markDisconnected)
+  provider.on('authenticationFailed', markDisconnected)
   try {
     provider.awareness.on('change', refreshUsers)
   } catch {
@@ -57,6 +64,8 @@ onBeforeUnmount(() => {
   if (!provider) return
   try {
     provider.off('status', onStatus)
+    provider.off('close', markDisconnected)
+    provider.off('authenticationFailed', markDisconnected)
   } catch {
     /* noop */
   }

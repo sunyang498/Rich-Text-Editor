@@ -47,9 +47,16 @@ export const useDocsStore = defineStore('docs', () => {
     items.value = items.value.filter((d) => d.id !== id)
   }
 
+  /** 公开只读开关（owner）：列表项同步更新 */
+  async function setPublic(id: string, isPublic: boolean): Promise<void> {
+    const doc = await docsApi.setPublic(id, isPublic)
+    const idx = items.value.findIndex((d) => d.id === id)
+    if (idx >= 0) items.value[idx] = doc
+  }
+
   function open(id: string) {
     return docsApi.open(id)
   }
 
-  return { items, nextCursor, loading, error, fetchList, create, rename, remove, open }
+  return { items, nextCursor, loading, error, fetchList, create, rename, remove, setPublic, open }
 })

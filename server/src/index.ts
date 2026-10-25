@@ -7,8 +7,8 @@ import http from 'http';
 import crossws from 'crossws/adapters/node';
 import { Hocuspocus, type WebSocketLike } from '@hocuspocus/server';
 import { createApp } from './app';
-import { createCollabServer, flushPendingUpdates } from './collab/server';
-import { registerCollabCloser } from './lib/collab-registry';
+import { createCollabServer, flushPendingUpdates, closeReadOnlyConnections } from './collab/server';
+import { registerCollabCloser, registerViewerCloser } from './lib/collab-registry';
 import { env, loadEnv } from './lib/env';
 
 loadEnv();
@@ -21,6 +21,8 @@ const httpServer = http.createServer(app);
 const collab: Hocuspocus = createCollabServer();
 // E2：文档软删后由服务端主动断开该文档的所有在线连接
 registerCollabCloser((documentId) => collab.closeConnections(documentId));
+// M2：关闭公开（is_public=false）后断开该文档的只读连接
+registerViewerCloser((documentId) => closeReadOnlyConnections(collab, documentId));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ws = crossws({

@@ -18,6 +18,8 @@ const router = createRouter({
       name: 'editor',
       component: () => import('@/views/EditorView.vue'),
       props: true,
+      // M2：公开文档允许匿名只读打开（私有文档会由后端返回 401，页面引导登录）
+      meta: { public: true },
     },
     { path: '/:pathMatch(.*)*', redirect: '/docs' },
   ],
