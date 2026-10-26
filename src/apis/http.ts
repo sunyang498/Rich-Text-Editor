@@ -80,15 +80,27 @@ http.interceptors.response.use(
 
     if (status === 401 && config && !config._retry && tokenStore.getRefresh()) {
       config._retry = true
+      // T5：记下本次刷新用的 refreshToken，用于识别“是否已被其他标签轮换掉”
+      const usedRefresh = tokenStore.getRefresh()
       try {
         const newToken = await refreshAccessToken()
         config.headers = (config.headers as Record<string, string>) ?? {}
         ;(config.headers as Record<string, string>).Authorization = `Bearer ${newToken}`
         return http(config as never)
       } catch (e) {
+        // T5（多标签互踢）：服务端 refresh 是“单次使用 + 原子轮换”，
+        // 两个标签同时 401 时只会放行一个；失败的那个不应把自己登出，
+        // 若发现 refreshToken 已被其他标签换过且本地已有新 access，直接用它重放。
+        const latestAccess = tokenStore.getAccess()
+        const latestRefresh = tokenStore.getRefresh()
+        if (latestAccess && latestRefresh && latestRefresh !== usedRefresh) {
+          config.headers = (config.headers as Record<string, string>) ?? {}
+          ;(config.headers as Record<string, string>).Authorization = `Bearer ${latestAccess}`
+          return http(config as never)
+        }
         // P1-1：仅凭证失效（401/403）清登录态；网络抖动保留 token，待用户重试
-        const status = (e as { response?: { status?: number } })?.response?.status
-        if (status === 401 || status === 403) {
+        const failStatus = (e as { response?: { status?: number } })?.response?.status
+        if (failStatus === 401 || failStatus === 403) {
           tokenStore.clear()
           notifyUnauthorized()
         }
