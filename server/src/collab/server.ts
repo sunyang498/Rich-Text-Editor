@@ -9,49 +9,45 @@
  *                    ③ viewer → connectionConfig.readOnly=true（服务端拦上行 update）
  *  - closeViewerConnections：关公开时主动断开只读连接（否则已建立的连接继续收内容）
  *
- * 持久化（append-only）：
- *  - onLoadDocument：从 y_doc_updates 全量重放
- *  - onChange：增量先入内存队列，300ms 防抖 + Y.mergeUpdates 合并后 append（退出时 flush）
+ * 持久化（append-only，at-least-once）：
+ *  - onLoadDocument：从 y_doc_updates 全量重放（Yjs applyUpdate 幂等，重复应用结果一致）
+ *  - onChange：增量先入内存队列，300ms 固定窗口 + Y.mergeUpdates 合并后 append
+ *  - 落库失败：把合并后的增量**回队首**并指数退避重试（上限 3 次），
+ *    保证 ① 数据不静默丢失 ② 重放顺序不变（否则 Yjs 虽能收敛但顺序乱）
+ *  - 进程退出：allSettled 尽力落库，单个文档失败不影响其他文档
  */
 import { Hocuspocus } from '@hocuspocus/server';
 import * as Y from 'yjs';
 import { prisma } from '../lib/prisma';
 import { verifyCollabTicket } from '../lib/token';
 import { getUpdates, appendUpdate } from '../lib/y-store';
+import { createPersistQueue } from '../lib/persist-queue';
 
-/** 落库防抖：事务增量先入内存队列，固定窗口(300ms)合并为一条写入，避免每击键写库 */
-const FLUSH_DEBOUNCE_MS = 300;
-const pendingUpdates = new Map<string, Uint8Array[]>();
-const flushTimers = new Map<string, NodeJS.Timeout>();
+/**
+ * 落库队列：append-only + 300ms 固定窗口 + 失败回队重试
+ * 实现抽到 lib/persist-queue.ts，目的：可注入 append 失败做单测（P0-1/2/3 回归）
+ */
+const persistQueue = createPersistQueue({
+  append: appendUpdate,
+  merge: (updates) => Y.mergeUpdates(updates),
+  flushMs: 300,
+});
 
-function scheduleFlush(documentId: string): void {
-  if (flushTimers.has(documentId)) return; // 固定窗口（maxDebounce 语义）
-  const timer = setTimeout(() => {
-    flushTimers.delete(documentId);
-    void flushDocumentUpdates(documentId);
-  }, FLUSH_DEBOUNCE_MS);
-  flushTimers.set(documentId, timer);
-}
-
-async function flushDocumentUpdates(documentId: string): Promise<void> {
-  const updates = pendingUpdates.get(documentId);
-  if (!updates?.length) return;
-  pendingUpdates.delete(documentId);
-  const merged = updates.length === 1 ? updates[0] : Y.mergeUpdates(updates); // 无损合并
-  await appendUpdate(documentId, merged);
-}
-
-/** 进程退出前调用：清空定时器并落库剩余增量 */
+/** 进程退出前调用：清空定时器并尽力落库剩余增量（单文档失败不影响其他文档） */
 export async function flushPendingUpdates(): Promise<void> {
-  for (const timer of flushTimers.values()) clearTimeout(timer);
-  flushTimers.clear();
-  await Promise.all([...pendingUpdates.keys()].map((id) => flushDocumentUpdates(id)));
+  const result = await persistQueue.flushAll();
+  if (result.failed || result.pending.length) {
+    console.error(
+      `[collab] shutdown flush incomplete: failed=${result.failed} pending=[${result.pending.join(',')}]`
+    );
+  }
 }
 
 /**
  * 关闭公开（is_public=false）时调用：
- * - 该文档存在只读连接 → 断开该文档全部连接（owner 会自动带新票重连，重连时票已变 owner，无感）
- * - 无只读连接 → 不动（避免误踢 owner）
+ * - 无只读连接 → 不动（避免房间里没有 viewer 时也无谓断连）
+ * - 有只读连接 → 整房断开（Hocuspocus 无按连接过滤的批量断开能力）；
+ *   owner 会被一并断开，但会自动带新票重连（≈1s 抖动，见交付文档 L4）
  * Hocuspocus 未提供按连接过滤的批量断开，故借助 Connection.readOnly 先探测。
  */
 export function closeReadOnlyConnections(instance: Hocuspocus, documentId: string): void {
@@ -109,12 +105,9 @@ export function createCollabServer(): Hocuspocus {
       return ydoc;
     },
 
-    // 每次事务变更：增量入队（防抖合并落库）；节流更新文档最后编辑时间
+    // 每次事务变更：增量入队（300ms 窗口合并落库，失败回队重试）；节流更新文档最后编辑时间
     async onChange({ documentName, update }) {
-      const list = pendingUpdates.get(documentName) ?? [];
-      list.push(update);
-      pendingUpdates.set(documentName, list);
-      scheduleFlush(documentName);
+      persistQueue.enqueue(documentName, update);
 
       const now = Date.now();
       if (now - (lastTouch.get(documentName) ?? 0) >= TOUCH_THROTTLE_MS) {
